@@ -1,14 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <header>
-    <title>Bonjour totu</title>
-  </header>
+  <head>
+    <title>Listen Along</title>
+    <link id="favicon" rel="icon" href="/" />
+    <meta name="og:image" property="og:image" content="">
+    <meta property="og:image:width" content="60">
+    <meta property="og:image:height" content="60">
+    <link rel="alternate" type="application/json+oembed" href="https://www.youtube.com/oembed?format=json&amp;url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DDO8NSL5Wyeg" title="Stromae - L’enfer (Official Music Video)">
+  </head>
   <body>
-    <h1>Bonjour monde</h1>
-    <a id="login" href="/login">le login ouais</a>
-    <p id="logged"></p>
-    <button id="connectPlayer">Start listening</button><br>
-    <button id="disconnectPlayer">Disconnect Player</button><br>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <h1>Listen Along</h1>
+    <a id="login" href="/login">Log In</a>
+    <div id="searchbar">
+      <input type="text" id="searchbar-val" placeholder="Filter value"/>
+      <select id="searchbar-type">
+        <option value="track" selected>Track</option>
+        <option value="artist">Artist</option>
+        <option value="album">Album</option>
+      </select>
+      <button id="searchbar-btn">Search</button>
+    </div>
     <br>
     <button id="togglePlay">Toggle Play</button>
     <script
