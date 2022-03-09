@@ -10,7 +10,7 @@
         "outputPath": "dist/apps/listen-along-server",
         "main": "apps/listen-along-server/src/main.ts",
         "tsConfig": "apps/listen-along-server/tsconfig.app.json",
-        "assets": ["apps/listen-along-server/src/assets"]
+        "assets": ["apps/listen-along-server/src/assets", "apps/listen-along-server/src/public"]
       },
       "configurations": {
         "production": {

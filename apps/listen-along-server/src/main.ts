@@ -18,11 +18,7 @@ const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const redirect_uri = 'http://localhost:3333/callback';
 
-app.use(
-  express.static(
-    path.join('F:\\code\\hey\\hey\\apps\\listen-along-server', 'public')
-  )
-);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // app.get('/api', (req, res) => {
 //   res.send({ message: 'Welcome to listen-along-server!' });
