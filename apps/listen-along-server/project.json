@@ -1,0 +1,52 @@
+{
+  "root": "apps/listen-along-server",
+  "sourceRoot": "apps/listen-along-server/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/node:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/listen-along-server",
+        "main": "apps/listen-along-server/src/main.ts",
+        "tsConfig": "apps/listen-along-server/tsconfig.app.json",
+        "assets": ["apps/listen-along-server/src/assets"]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/listen-along-server/src/environments/environment.ts",
+              "with": "apps/listen-along-server/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "listen-along-server:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/listen-along-server/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/apps/listen-along-server"],
+      "options": {
+        "jestConfig": "apps/listen-along-server/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

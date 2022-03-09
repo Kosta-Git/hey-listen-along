@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "projects": {
+    "listen-along-server": "apps/listen-along-server"
+  }
+}
