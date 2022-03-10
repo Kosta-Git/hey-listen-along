@@ -1,15 +1,17 @@
 export enum EventType {
   /**
-   * Add an array of songs to the queue
+   * Queue events
    */
-  AddToQueue,
+  QueueAdd = "queue:add",
+  QueueRemove = "queue:remove",
+  QueueClear = "queue:clear",
+  QueueList = "queue:list",
   /**
-   * Current song playing, with timestamp
+   * Player events
    */
-  PlayerState,
-  /**
-   *
-   */
-  ClearQueue,
-  Sync
+  PlayerState = "player:state",
+  PlayerSync = "player:sync",
+  PlayerPause = "player:pause",
+  PlayerResume = "player:resume",
+  PlayerSkip = "player:skip",
 }
