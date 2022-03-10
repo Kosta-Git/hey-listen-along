@@ -97,4 +97,5 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   });
 
   player.connect();
+  initWebsocket(player);
 };
