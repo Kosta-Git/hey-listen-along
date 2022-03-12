@@ -1,0 +1,137 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    background-color: #242424;
+    font-family: 'Raleway', sans-serif;
+    min-width: 970px;
+}
+
+.slider {
+    accent-color: rgba(208, 255, 0, 0.904);
+}
+
+.player-container {
+    width: 100%;
+    height: 80px;
+    display: grid;
+    grid-template-areas:'track-infos player options';
+    grid-auto-columns: 1.5fr 4fr 1fr;
+    grid-column-gap: 1em;
+    position: fixed;
+    bottom: 0;
+    background-color: rgb(15, 14, 14);
+}
+
+.player-container * {
+    color: rgb(184, 184, 184);
+}
+
+.track-infos {
+    display: flex;
+    flex-direction: row;
+}
+
+.track-infos #currentTrackImage {
+    width:80px;
+    height:80px;
+}
+
+.track-infos > div {
+    padding: 5px 0px 5px 10px;
+    display: flex;
+    align-items: center;
+}
+
+.track-infos div #currentTrackTitle, .track-infos div #currentTrackSingers
+{
+    max-width:150px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.track-infos div #currentTrackTitle {
+    font-weight: bold;
+}
+
+.track-infos div #currentTrackSingers {
+    font-weight: lighter;
+    font-size: 0.8em;
+}
+
+.player {
+    min-width: 500px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.player span {
+    height: 22px;
+    vertical-align: middle;
+    margin: auto 1.5em;
+}
+
+#songActualTimerRange {
+    width: 350px;
+}
+
+.togglePlayButton {
+    background-color: rgba(208, 255, 0);
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 15px;
+    border: inherit;
+    transition: 0.5s;
+}
+
+.togglePlayButton:hover {
+    background-color:rgba(217, 255, 0, 0.753);
+    transition:.5s;
+}
+
+.togglePlayButton i {
+    color:rgb(88, 88, 88);
+}
+
+.skipButton {
+    width: 30px;
+    height: 30px;
+    border: inherit;
+    background-color: rgb(15, 14, 14);
+}
+
+.skipButton i {
+    color:rgb(88, 88, 88);
+    transition: .5s;
+}
+
+.skipButton:hover i {
+    color:rgb(126, 126, 126);
+    transition: .5s;
+}
+
+.options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.options div {
+    min-width: 220px;
+}
+
+#playerVolumeIcon {
+    width: 20px;
+    margin-right: 8px;
+}
+
+#playerVolumeValue {
+    width: 150px;
+    margin-right: 20px;
+}

@@ -30,7 +30,7 @@ const searchItem = async (query, token) => {
   let url = new URLSearchParams();
   url.append('type', 'track');
   url.append('q', query);
-  url.append('limit', 20);
+  url.append('limit', 5);
   return await fetch(urlBase + url.toString(), {
     headers: {
       Authorization: 'Bearer ' + token,
@@ -53,12 +53,12 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   };
 
   let current_device;
-  document.getElementById('togglePlay').hidden = true;
+  //document.getElementById('togglePlay').hidden = true;
   document.getElementById('searchbar').hidden = true;
   const token = getCookie('token');
   if (!token) return;
   document.getElementById('login').hidden = true;
-  document.getElementById('togglePlay').hidden = false;
+  //document.getElementById('togglePlay').hidden = false;
   document.getElementById('searchbar').hidden = false;
 
   const player = new Spotify.Player({
@@ -66,7 +66,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     getOAuthToken: (cb) => {
       cb(token);
     },
-    volume: 0.2,
+    volume: 0.1,
   });
 
   // Ready
@@ -78,7 +78,21 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   // Not Ready
   player.addListener('not_ready', () => console.log('stopped'));
 
-  $('#togglePlay').click(() => player.togglePlay());
+  $('#togglePlayButton').click(() => {
+    player.getCurrentState().then(state => {
+      if(!state) return;
+      if(state.paused) {
+        document.querySelector("#togglePlayButton i").classList.remove('fa-play');
+        document.querySelector("#togglePlayButton i").classList.add('fa-pause');
+        // Set button icon to "pause"
+      } else {
+        document.querySelector("#togglePlayButton i").classList.remove('fa-pause');
+        document.querySelector("#togglePlayButton i").classList.add('fa-play');
+        // Set button icon to "play"
+      }
+    })
+    player.togglePlay();
+  });
 
   $('#searchbar-btn').click(() => {
 	if (document.getElementById('searchbar-val').value !== '') {
@@ -88,14 +102,77 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 		  .then(async (json) => {
 			  let firstResult = json["tracks"]["items"][0];
 			  document.title = firstResult["name"] + " - Listen Along";
-			  $('meta[name=og\\:image]').attr('content', firstResult["album"]["images"][1]["url"] + ".jpg");
 			  $("#favicon").attr("href", firstResult["album"]["images"][2]["url"]);
+        $('#currentTrackImage').attr('src', firstResult["album"]["images"][2]["url"]);
+        $('#currentTrackTitle').text(firstResult["name"]);
+        $('#currentTrackSingers').text(firstResult["artists"].map(artist => artist["name"]).join(","));
+        let seconds = Math.round(firstResult["duration_ms"] / 1000)
+        document.querySelector('#songActualTimerRange').value = '0';
+        document.querySelector('#songActualTimerRange').max = `${seconds}`;
+        document.querySelector('#songActualTimerRange').step = 1;
+        $('#songDuration').text(`${Math.floor(seconds/60)}:${seconds%60}`);
+        setInterval(async function() {
+          let status = await player.getCurrentState();
+          let seconds_pos = Math.round(status["position"]  / 1000);
+          document.querySelector('#songActualTimerRange').value = seconds_pos;
+          document.querySelector('#songActualTimer').innerText = `${Math.floor(seconds_pos/60)}:${(seconds_pos%60) < 10 ? '0'+seconds_pos%60 : seconds_pos%60}`;
+        }, 1000);
 			  await play(firstResult["uri"], current_device, token);
 			  await player.seek(0);
+        document.querySelector("#togglePlayButton i").classList.remove('fa-play');
+        document.querySelector("#togglePlayButton i").classList.add('fa-pause');
 		  });
 	  }
   });
 
+  let tempVolumeVal = 0;
+  $('#playerVolumeIcon').click(async () => {
+    if(await player.getVolume() > 0) {
+      tempVolumeVal = document.querySelector('#playerVolumeValue').value;
+      document.querySelector('#playerVolumeValue').value = '0';
+      await player.setVolume(0);
+      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-high')
+      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-xmark')
+    } else {
+      document.querySelector('#playerVolumeValue').value = tempVolumeVal;
+      await player.setVolume(parseFloat(tempVolumeVal));
+      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-xmark')
+      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-high')
+    }
+  });
+  document.querySelector('#playerVolumeValue').addEventListener('input', async () => {
+    let newVal = parseFloat(document.querySelector('#playerVolumeValue').value);  
+    await player.setVolume(newVal);
+    if(newVal === 0) {
+      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-high')
+      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-xmark')
+    } else {
+      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-xmark')
+      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-high')
+    }
+  })
+
+  document.querySelector('#songActualTimerRange').addEventListener('input', async () => {
+    let wantedPos = parseInt(document.querySelector('#songActualTimerRange').value);
+    await player.seek(wantedPos*1000);
+  });
   player.connect();
+
+  document.querySelector('#playerVolumeValue').value = 0.1;
   initWebsocket(player);
 };
+
+/*let currentState = await player.getCurrentState();
+        
+currentState.context.metadata = new MediaMetadata({
+  title: `Test`,
+  artist: 'Nat King Cole',
+  album: 'The Ultimate Collection (Remastered)',
+  artwork: Array.from(
+    firstResult["album"]["images"].map(image => ({
+      src: image["url"],
+      sizes: `${image["width"]}x${image["height"]}`,
+      type: 'image/jpeg'
+    }))
+  )
+});*/
