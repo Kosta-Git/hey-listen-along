@@ -37,6 +37,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   const token = getCookie('token');
   const queue = new Queue();
   let current_device;
+  let lastEventWasSkip = false;
 
   playerContainer.css('visibility', 'hidden');
   searchContainer.css('visibility', 'hidden');
@@ -77,8 +78,8 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       let next = queue.next();
       await SpotifyApi.play(next.uri, current_device, token);
       await setCurrentTrack(await player.getCurrentState());
-      player.resume()
       await player.seek(0);
+      await player.resume()
     }
   })
 
@@ -99,7 +100,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
   // State changed
   player.addListener('player_state_changed', async (state) => {
-    const { position, paused, loading } = state;
+    const { paused, loading } = state;
 
     await setCurrentTrack(await player.getCurrentState());
 
@@ -113,20 +114,22 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
     // Trust me it means session has ended
     if (paused && loading) {
-      sessionStarted = false;
-      return;
+      if(lastEventWasSkip) {
+        lastEventWasSkip = false;
+        return;
+      }
+
+      let nextSong = queue.next();
+      if (!nextSong) {
+        sessionStarted = false;
+        return;
+      }
+
+      lastEventWasSkip = true;
+      await SpotifyApi.play(nextSong.uri, current_device, token);
+      await player.seek(0);
+      await setCurrentTrack(await player.getCurrentState());
     }
-
-    if (position !== 0) return;
-    if (!paused) return;
-
-    let nextSong = queue.next();
-    if (!nextSong) return;
-
-    await SpotifyApi.play(nextSong.uri, current_device, token);
-    await player.seek(0);
-
-    await setCurrentTrack(await player.getCurrentState());
   });
 
 
@@ -223,6 +226,11 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     document.querySelector('#songActualTimerRange').value = position;
     songTimer.text(`${Math.floor(position / 60)}:${(position % 60) < 10 ? '0' + position % 60 : position % 60}`);
   }
+
+  document.querySelector('#songActualTimerRange').addEventListener('input', async () => {
+    let wantedPos = parseInt(document.querySelector('#songActualTimerRange').value);
+    await player.seek(wantedPos * 1000);
+  });
 
   volumeManager(player);
   player.connect();

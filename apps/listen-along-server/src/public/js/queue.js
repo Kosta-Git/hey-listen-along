@@ -14,7 +14,7 @@ export class Queue {
   remove(id) { this.data = this.data.filter(s => s.id === id); }
 
   removeMany(ids) {
-    ids.array.forEach(id => {
+    ids.forEach(id => {
       this.data = this.data.filter(s => s.id === id);
     });
   }

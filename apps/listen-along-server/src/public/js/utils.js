@@ -7,11 +7,17 @@ export const songToPayload = (song) => ({
   preview_media: "string",
 });
 
+export const compareStates = (state_a, state_b) => {
+  return state_a.loading === state_b.loading &&
+         state_a.playing === state_b.playing &&
+         state_a.track_window.current_track.id === state_b.track_window.current_track.id
+}
+
 
 export const volumeManager = (player) => {
   let tempVolumeVal = 0;
   $('#playerVolumeIcon').click(async () => {
-    if(await player.getVolume() > 0) {
+    if (await player.getVolume() > 0) {
       tempVolumeVal = document.querySelector('#playerVolumeValue').value;
       document.querySelector('#playerVolumeValue').value = '0';
       await player.setVolume(0);
@@ -27,7 +33,7 @@ export const volumeManager = (player) => {
   document.querySelector('#playerVolumeValue').addEventListener('input', async () => {
     let newVal = parseFloat(document.querySelector('#playerVolumeValue').value);
     await player.setVolume(newVal);
-    if(newVal === 0) {
+    if (newVal === 0) {
       document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-high')
       document.querySelector("#playerVolumeIcon").classList.add('fa-volume-xmark')
     } else {
