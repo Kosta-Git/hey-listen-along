@@ -8,11 +8,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
+    <meta property="og:image" content="">
   </head>
   <body>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <h1>Listen Along</h1>
-    <a id="login" href="/login">Log In</a>
+    <div class="brand-container">
+      <h1 class="brand">Listen Along</h1>
+      <a id="login" class="login hidden" href="/login">Login with Spotify</a>
+    </div>
     <div id="searchContainer">
       <form id="searchTrackForm">
         <input type="search" id="query" placeholder="Search Song..." autocomplete="off">
@@ -35,9 +38,9 @@
         </div>
       </div>
       <div class="player">
-        <button class="navigateButton" id="previousTrackButton">
+        <!-- <button class="navigateButton" id="previousTrackButton">
           <i class="fa-solid fa-backward"></i>
-        </button>
+        </button> -->
         <button id="togglePlayButton" class="togglePlayButton">
           <i class="fa-solid fa-play"></i>
         </button>

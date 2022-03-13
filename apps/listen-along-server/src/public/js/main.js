@@ -35,12 +35,15 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   };
 
   const token = getCookie('token');
+  const queue = new Queue();
   let current_device;
 
   playerContainer.css('visibility', 'hidden');
   searchContainer.css('visibility', 'hidden');
-  if (!token) return;
-  document.getElementById('login').hidden = true;
+  if (!token) {
+    $("#login").removeClass("hidden");
+    return;
+  }
   playerContainer.css('visibility', 'visible');
   searchContainer.css('visibility', 'visible');
 
@@ -59,17 +62,21 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   socket.on(IO.events.player_pause_event, () => player.pause())
   socket.on(IO.events.player_resume_event, () => player.resume())
   socket.on(IO.events.player_skip_event, async () => {
-    await SpotifyApi.goToPreviousTrack(current_device, token);
+    let nextSong = queue.next();
+    if (!nextSong) return;
+
+    await SpotifyApi.play(nextSong.uri, current_device, token);
+    await player.seek(0);
   })
   socket.on(IO.events.queue_add_event, async (event) => {
-    Queue.add(event.payload[0]);
+    queue.add(event.payload[0]);
 
     // If the session hasnt started we can play the song directly
     if (!sessionStarted) {
       sessionStarted = true;
-      let next = Queue.next();
+      let next = queue.next();
       await SpotifyApi.play(next.uri, current_device, token);
-      await setCurrentTrack(await player.getCurrentState());
+      await player.seek(0);
     }
   })
 
@@ -92,12 +99,14 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   player.addListener('player_state_changed', async (state) => {
     const { position, paused, loading } = state;
 
+    await setCurrentTrack(await player.getCurrentState());
+
     if (paused) {
-      document.querySelector("#togglePlayButton i").classList.remove('fa-play');
-      document.querySelector("#togglePlayButton i").classList.add('fa-pause');
-    } else {
       document.querySelector("#togglePlayButton i").classList.remove('fa-pause');
       document.querySelector("#togglePlayButton i").classList.add('fa-play');
+    } else {
+      document.querySelector("#togglePlayButton i").classList.remove('fa-play');
+      document.querySelector("#togglePlayButton i").classList.add('fa-pause');
     }
 
     // Trust me it means session has ended
@@ -109,10 +118,12 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     if (position !== 0) return;
     if (!paused) return;
 
-    let nextSong = Queue.next();
+    let nextSong = queue.next();
     if (!nextSong) return;
 
     await SpotifyApi.play(nextSong.uri, current_device, token);
+    await player.seek(0);
+
     await setCurrentTrack(await player.getCurrentState());
   });
 
@@ -137,13 +148,11 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     })
   });
 
-  document.querySelector('#previousTrackButton').addEventListener('click', () => {
-    socket.emit(IO.events.player_skip_event, { sentAt: new Date().getTime(), payload: null})
-  });
+  // TODO: Backend impl
+  // document.querySelector('#previousTrackButton').addEventListener('click', () => );
 
-  // TODO: backend
   document.querySelector('#nextTrackButton').addEventListener('click', async () => {
-    await SpotifyApi.goToNextTrack(current_device, token);
+    socket.emit(IO.events.player_skip_event, { sentAt: new Date().getTime(), payload: null })
   });
 
   // Search results
@@ -190,6 +199,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
     document.title = currentTrack.name + " - Listen Along";
     $("#favicon").attr("href", currentTrack.album.images[2].url);
+    $('meta[name=og\\:image]').attr('content', currentTrack.album.images[2].url);
 
     currentTrackImage.attr('src', currentTrack.album.images[2].url);
     currentTrackTitle.text(currentTrack.name);
@@ -203,8 +213,6 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     songDuration.text(`${Math.floor(seconds / 60)}:${(seconds % 60) < 10 ? '0' + seconds % 60 : seconds % 60}`);
 
     setInterval(updateCurrentTrack, 1000);
-
-    await player.seek(0);
   };
 
   const updateCurrentTrack = async () => {

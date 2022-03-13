@@ -12,7 +12,7 @@ const transferPlayback = async (device_id, token) => {
       }),
     });
 };
-  
+
 const play = async (spotify_uri, device_id, token) => {
     await fetch(
       `https://api.spotify.com/v1/me/player/play?device_id=${device_id}`,
@@ -26,14 +26,14 @@ const play = async (spotify_uri, device_id, token) => {
       }
     );
 };
-  
+
 const searchItem = async (query, token) => {
     let urlBase = 'https://api.spotify.com/v1/search?';
     let url = new URLSearchParams();
     url.append('type', 'track');
     url.append('q', query);
     url.append('limit', 5);
-    return await fetch(urlBase + url.toString(), {
+    return fetch(urlBase + url.toString(), {
       headers: {
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json',

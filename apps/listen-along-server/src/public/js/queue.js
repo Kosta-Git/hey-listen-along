@@ -1,25 +1,23 @@
-let queue = [];
+export class Queue {
+  constructor() {
+    this.data = [];
+  }
 
-const add = (song) => {
-  queue.push(song);
-}
+  add(elem) { this.data.push(elem); }
 
-const next = () => {
-  return queue.length > 0 ? queue.pop() : null;
-}
+  hasNext() { return this.data.length !== 0; }
 
-const clear = () => {
-  queue.clear();
-}
+  next() { return this.data.shift(); }
 
-const remove = (id) => {
-  queue = queue.filter(s => s.id === id);
-}
+  clear() { this.data = []; }
 
+  remove(id) { this.data = this.data.filter(s => s.id === id); }
 
-export const Queue = {
-  add,
-  next,
-  clear,
-  remove
+  removeMany(ids) {
+    ids.array.forEach(id => {
+      this.data = this.data.filter(s => s.id === id);
+    });
+  }
+
+  all() { return this.data; }
 }
