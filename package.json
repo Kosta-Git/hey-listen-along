@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node dist/apps/listen-along-server/main.js",
-    "build": "npx nx run build listen-along-server",
+    "build": "yarn nx run build listen-along-server",
     "test": "nx test"
   },
   "private": true,
