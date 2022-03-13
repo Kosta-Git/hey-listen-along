@@ -76,6 +76,8 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       sessionStarted = true;
       let next = queue.next();
       await SpotifyApi.play(next.uri, current_device, token);
+      await setCurrentTrack(await player.getCurrentState());
+      player.resume()
       await player.seek(0);
     }
   })
