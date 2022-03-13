@@ -10,7 +10,10 @@
         "outputPath": "dist/apps/listen-along-server",
         "main": "apps/listen-along-server/src/main.ts",
         "tsConfig": "apps/listen-along-server/tsconfig.app.json",
-        "assets": ["apps/listen-along-server/src/assets", "apps/listen-along-server/src/public"]
+        "assets": [
+          "apps/listen-along-server/src/assets",
+          "apps/listen-along-server/src/public"
+        ]
       },
       "configurations": {
         "production": {
@@ -45,6 +48,13 @@
       "options": {
         "jestConfig": "apps/listen-along-server/jest.config.js",
         "passWithNoTests": true
+      }
+    },
+    "docker-build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "outputs": [],
+      "options": {
+        "command": "docker build -t listen-along-server:latest --compress -f ./apps/listen-along-server/Dockerfile ."
       }
     }
   },
