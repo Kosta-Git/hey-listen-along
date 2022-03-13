@@ -1,43 +1,23 @@
-const transferPlayback = async (device_id, token) => {
-  await fetch('https://api.spotify.com/v1/me/player', {
-    method: 'PUT',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      device_ids: [device_id],
-    }),
-  });
-};
+import * as SpotifyApi from './api.js'
 
-const play = async (spotify_uri, device_id, token) => {
-  await fetch(
-    `https://api.spotify.com/v1/me/player/play?device_id=${device_id}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify({ uris: [spotify_uri] }),
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-};
+/** Visual Elements */
+let playerContainer = $('#playerContainer');
+let searchContainer = $('#searchContainer');
+/** Visual Elements - Player Track */
+let currentTrackImage = $('#currentTrackImage');
+let currentTrackTitle = $('#currentTrackTitle');
+let currentTrackSingers = $('#currentTrackSingers');
 
-const searchItem = async (query, token) => {
-  let urlBase = 'https://api.spotify.com/v1/search?';
-  let url = new URLSearchParams();
-  url.append('type', 'track');
-  url.append('q', query);
-  url.append('limit', 5);
-  return await fetch(urlBase + url.toString(), {
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-    },
-  });
-};
+let songTimer = $('#songActualTimer');
+let songDuration = $('#songDuration');
+let songTimerRange = $('#songActualTimerRange');
+
+//let togglePlayButton = $('#togglePlayButton');
+
+// Prevents page reloading when search button is used
+$('#searchTrackForm').submit(function(e){
+  e.preventDefault();
+});
 
 window.onSpotifyWebPlaybackSDKReady = async () => {
   const getCookie = (cle) => {
@@ -52,14 +32,15 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     return valeur;
   };
 
-  let current_device;
-  //document.getElementById('togglePlay').hidden = true;
-  document.getElementById('searchbar').hidden = true;
   const token = getCookie('token');
+  let current_device;
+
+  playerContainer.css('visibility', 'hidden');
+  searchContainer.css('visibility', 'hidden');
   if (!token) return;
   document.getElementById('login').hidden = true;
-  //document.getElementById('togglePlay').hidden = false;
-  document.getElementById('searchbar').hidden = false;
+  playerContainer.css('visibility', 'visible');
+  searchContainer.css('visibility', 'visible');
 
   const player = new Spotify.Player({
     name: 'Listen Along',
@@ -72,7 +53,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   // Ready
   player.addListener('ready', async ({ device_id }) => {
     current_device = device_id;
-    await transferPlayback(device_id, token);
+    await SpotifyApi.transferPlayback(device_id, token);
   });
 
   // Not Ready
@@ -84,46 +65,85 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       if(state.paused) {
         document.querySelector("#togglePlayButton i").classList.remove('fa-play');
         document.querySelector("#togglePlayButton i").classList.add('fa-pause');
-        // Set button icon to "pause"
       } else {
         document.querySelector("#togglePlayButton i").classList.remove('fa-pause');
         document.querySelector("#togglePlayButton i").classList.add('fa-play');
-        // Set button icon to "play"
       }
     })
     player.togglePlay();
   });
 
+
   $('#searchbar-btn').click(() => {
-	if (document.getElementById('searchbar-val').value !== '') {
-		let query = document.getElementById('searchbar-val').value.trim().replaceAll(/\s+/g,'+');
-		searchItem(query, token)
-		  .then((response) => response.json())
-		  .then(async (json) => {
-			  let firstResult = json["tracks"]["items"][0];
-			  document.title = firstResult["name"] + " - Listen Along";
-			  $("#favicon").attr("href", firstResult["album"]["images"][2]["url"]);
-        $('#currentTrackImage').attr('src', firstResult["album"]["images"][2]["url"]);
-        $('#currentTrackTitle').text(firstResult["name"]);
-        $('#currentTrackSingers').text(firstResult["artists"].map(artist => artist["name"]).join(","));
-        let seconds = Math.round(firstResult["duration_ms"] / 1000)
-        document.querySelector('#songActualTimerRange').value = '0';
-        document.querySelector('#songActualTimerRange').max = `${seconds}`;
-        document.querySelector('#songActualTimerRange').step = 1;
-        $('#songDuration').text(`${Math.floor(seconds/60)}:${seconds%60}`);
-        setInterval(async function() {
-          let status = await player.getCurrentState();
-          let seconds_pos = Math.round(status["position"]  / 1000);
-          document.querySelector('#songActualTimerRange').value = seconds_pos;
-          document.querySelector('#songActualTimer').innerText = `${Math.floor(seconds_pos/60)}:${(seconds_pos%60) < 10 ? '0'+seconds_pos%60 : seconds_pos%60}`;
-        }, 1000);
-			  await play(firstResult["uri"], current_device, token);
-			  await player.seek(0);
-        document.querySelector("#togglePlayButton i").classList.remove('fa-play');
-        document.querySelector("#togglePlayButton i").classList.add('fa-pause');
-		  });
-	  }
+    if(document.querySelector('#query').value !== '') {
+      let query = document.querySelector('#query').value.trim().replaceAll(/\s+/g,'+');
+      SpotifyApi.searchItem(query, token)
+        .then(response => response.json())
+        .then(json => {
+          document.querySelector('#searchResults').innerHTML = '';
+          json.tracks.items.forEach((songItem, pos) => {
+            let article = document.createElement('article');
+            article.innerHTML = `<img src="${songItem.album.images[0].url}" alt="Track Image">
+                                <div class="container">
+                                  <div class="songTitle">${songItem.name}</div>
+                                  <div class="songSinger">${songItem.artists.map(artist => artist.name).join(",")}</div>
+                                </div>`;
+            article.classList.add('searchResult');
+
+            let addButton = document.createElement('button');
+            addButton.innerHTML = `<i class="fa-solid fa-satellite-dish"></i>`
+            addButton.addEventListener('click', async () => {
+              await SpotifyApi.play(songItem.uri, current_device, token);
+              await setCurrentTrack(await player.getCurrentState());
+            });
+            
+            article.appendChild(addButton);
+            document.querySelector('#searchResults').appendChild(article);
+          });
+        });
+    }
   });
+
+  const setCurrentTrack = async (state) => {
+    let currentTrack = state.track_window.current_track;
+    
+    document.title = currentTrack.name + " - Listen Along";
+    $("#favicon").attr("href", currentTrack.album.images[2].url);
+
+    currentTrackImage.attr('src', currentTrack.album.images[2].url);
+    currentTrackTitle.text(currentTrack.name);
+    currentTrackSingers.text(currentTrack.artists.map(artist => artist.name).join(","));
+
+    let seconds = Math.round(currentTrack.duration_ms / 1000);
+    songTimerRange.attr('value', 0);
+    songTimerRange.attr('step', 1);
+    songTimerRange.attr('max', seconds);
+    
+    songDuration.text(`${Math.floor(seconds/60)}:${(seconds%60) < 10 ? '0'+seconds%60 : seconds%60}`);
+    
+    setInterval(updateCurrentTrack, 1000);
+
+    await player.seek(0);
+
+    document.querySelector("#togglePlayButton i").classList.remove('fa-play');
+    document.querySelector("#togglePlayButton i").classList.add('fa-pause');
+
+    document.querySelector('#previousTrackButton').addEventListener('click', async () => {
+      await SpotifyApi.goToPreviousTrack(current_device, token);
+    });
+
+    document.querySelector('#nextTrackButton').addEventListener('click', async () => {
+      await SpotifyApi.goToNextTrack(current_device, token);
+    });
+  };
+
+  const updateCurrentTrack = async () => {
+    let status = await player.getCurrentState();
+    let position = Math.round(status["position"]  / 1000);
+    document.querySelector('#songActualTimerRange').value = position;
+    console.log('update du timer ' + position);
+    songTimer.text(`${Math.floor(position/60)}:${(position%60) < 10 ? '0'+position%60 : position%60}`);
+  }
 
   let tempVolumeVal = 0;
   $('#playerVolumeIcon').click(async () => {
@@ -159,6 +179,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   player.connect();
 
   document.querySelector('#playerVolumeValue').value = 0.1;
+<<<<<<< web-bindings
   initWebsocket(player);
 };
 
@@ -176,3 +197,6 @@ currentState.context.metadata = new MediaMetadata({
     }))
   )
 });*/
+=======
+};
+>>>>>>> UPDATE - Query > Choix > Player + Amélioration Visuelle

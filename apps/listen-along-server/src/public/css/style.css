@@ -5,9 +5,110 @@
 
 html {
     background-color: #242424;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Cutive Mono', monospace;
     min-width: 970px;
 }
+
+#searchContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 100px;
+}
+
+#searchContainer #searchTrackForm {
+    background-color: rgb(88, 88, 88);
+    width: 400px;
+    height: 30px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 2em auto;
+}
+
+#searchContainer #searchTrackForm input {
+    all: unset;
+    color: white;
+    height: 100%;
+    width: 100%;
+    padding: 6px 10px;
+}
+
+::placeholder {
+    color: whitesmoke;
+    opacity: 0.7; 
+}
+
+#searchContainer #searchTrackForm button {
+    all: unset;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+}
+  
+#searchContainer #searchTrackForm button i {
+    color: #fff;
+    fill: currentColor;
+    text-align: center;
+    line-height: 10px;
+}
+
+.searchResults {
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.searchResult {
+    height: 100px;
+    width: 100%;
+    margin: 0.5em;
+    border-radius: 1em;
+    background: rgb(15, 14, 14);
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.searchResult img {
+    width: 100px;
+    height: 100px;
+    border-radius: 1em 0em 0em 1em;
+}
+
+.searchResult .container {
+    width: 400px;
+    padding: 1em;
+    color: whitesmoke;
+}
+
+.searchResult .container .songTitle {
+    font-size: 1.1em;
+}
+
+.searchResult button {
+    width: 100px;
+    height: 100px;
+    border-radius: 0em 1em 1em 0em;
+    background-color: rgba(208, 255, 0, 0.904);
+    transition: 0.5s;
+    border: inherit;
+}
+
+.searchResult button:hover {
+    background-color:rgba(217, 255, 0, 0.753);
+    transition:.5s;
+}
+
+.searchResult button i {
+    font-size: 2em;
+}
+ 
+
 
 .slider {
     accent-color: rgba(208, 255, 0, 0.904);
@@ -18,7 +119,7 @@ html {
     height: 80px;
     display: grid;
     grid-template-areas:'track-infos player options';
-    grid-auto-columns: 1.5fr 4fr 1fr;
+    grid-auto-columns: 2fr 4fr 1fr;
     grid-column-gap: 1em;
     position: fixed;
     bottom: 0;
@@ -47,7 +148,7 @@ html {
 
 .track-infos div #currentTrackTitle, .track-infos div #currentTrackSingers
 {
-    max-width:150px;
+    max-width:200px;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
@@ -63,7 +164,7 @@ html {
 }
 
 .player {
-    min-width: 500px;
+    min-width: 450px;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -71,7 +172,6 @@ html {
 }
 
 .player span {
-    height: 22px;
     vertical-align: middle;
     margin: auto 1.5em;
 }
@@ -85,6 +185,7 @@ html {
     width: 30px;
     height: 30px;
     min-width: 30px;
+    margin: auto 1em;
     border-radius: 15px;
     border: inherit;
     transition: 0.5s;
@@ -99,19 +200,19 @@ html {
     color:rgb(88, 88, 88);
 }
 
-.skipButton {
+.navigateButton {
     width: 30px;
     height: 30px;
     border: inherit;
     background-color: rgb(15, 14, 14);
 }
 
-.skipButton i {
+.navigateButton i {
     color:rgb(88, 88, 88);
     transition: .5s;
 }
 
-.skipButton:hover i {
+.navigateButton:hover i {
     color:rgb(126, 126, 126);
     transition: .5s;
 }
@@ -122,7 +223,7 @@ html {
     align-items: center;
 }
 
-.options div {
+.options {
     min-width: 220px;
 }
 
