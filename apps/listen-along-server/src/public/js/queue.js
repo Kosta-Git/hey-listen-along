@@ -11,6 +11,10 @@ export class Queue {
 
   clear() { this.data = []; }
 
+  setQueue(elems) {
+    this.data = elems
+  }
+
   remove(id) { this.data = this.data.filter(s => s.id === id); }
 
   removeMany(ids) {

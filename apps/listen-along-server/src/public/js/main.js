@@ -62,6 +62,46 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   const socket = IO.createWebsocket();
   socket.on(IO.events.player_pause_event, () => player.pause())
   socket.on(IO.events.player_resume_event, () => player.resume())
+  socket.on(IO.events.player_sync_event, async () => {
+    const state = await player.getCurrentState();
+    socket.emit(IO.events.player_state_event,
+      {
+        sentAt: new Date().getTime(),
+        payload: {
+          time: state.position,
+          song_uri: state.track_window.current_track.uri,
+          is_playing: !state.paused,
+          has_started_listening: sessionStarted,
+          queue: queue.all()
+        }
+      })
+  })
+  socket.on(IO.events.player_state_event, async (event) => {
+    const deltaTimeServer = new Date().getTime() - event.sentAt;
+    const {time, song_uri, is_playing, queue: serverQueue} = event.payload;
+    const localState = await player.getCurrentState();
+
+    const currentUri = localState.track_window.current_track.uri;
+    const currentTime = localState.position;
+
+    if(is_playing === localState.paused) {
+      await player.togglePlay();
+    }
+
+    // HAI
+    if(currentUri !== song_uri) {
+      queue.setQueue(serverQueue);
+      await SpotifyApi.play(song_uri, current_device, token);
+      await player.seek(time + deltaTimeServer);
+    } else {
+      const deltaTime = (time + deltaTimeServer) - currentTime;
+
+      if(deltaTime > 300) {
+        await player.seek(time + deltaTimeServer);
+      }
+    }
+    // KTHXBYE
+  });
   socket.on(IO.events.player_skip_event, async () => {
     let nextSong = queue.next();
     if (!nextSong) return;
@@ -114,7 +154,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
     // Trust me it means session has ended
     if (paused && loading) {
-      if(lastEventWasSkip) {
+      if (lastEventWasSkip) {
         lastEventWasSkip = false;
         return;
       }
