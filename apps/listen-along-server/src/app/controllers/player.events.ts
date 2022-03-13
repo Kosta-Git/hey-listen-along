@@ -30,15 +30,28 @@ const playerState =
         ...s.state.queue.map((qs) => ({ song_uri: qs.uri })),
       ]);
     });
+
+    console.log("[1] SQ", songQueues)
+
+    if(songQueues.length === 0) return;
+
     const smallest = Math.min(...songQueues.map((a) => a.length));
+    console.log("[2] SM", smallest)
     songQueues = songQueues.filter((s) => s.length === smallest);
+    console.log("[3] SQ", songQueues)
     const highest = Math.max(...songQueues.map((a) => a[0].time));
+    console.log("[4] HAI", highest)
     const winner = songQueues.find(s => s[0].time === highest);
+    console.log("[5] WIN", winner)
 
     const winnerState = states.find(s => s.sid === winner[0].sid);
 
+    console.log("[6] WINS", winnerState)
+
     server.to(getRoom(socket)).emit(EventType.PlayerState, { sentAt: new Date().getTime(), payload: winnerState.state});
     states = [];
+
+    console.log("KTHXBYE")
   };
 
 const playerPause = (server: Server, socket: Socket) => (data: Event<null>) => {
