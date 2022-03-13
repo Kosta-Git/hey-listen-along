@@ -1,4 +1,7 @@
 import * as SpotifyApi from './api.js'
+import * as IO from './events.js'
+import { songToPayload, volumeManager } from './utils.js'
+import { Queue } from './queue.js'
 
 /** Visual Elements */
 let playerContainer = $('#playerContainer');
@@ -12,12 +15,11 @@ let songTimer = $('#songActualTimer');
 let songDuration = $('#songDuration');
 let songTimerRange = $('#songActualTimerRange');
 
-//let togglePlayButton = $('#togglePlayButton');
+// Check if session has started already
+let sessionStarted = false;
 
 // Prevents page reloading when search button is used
-$('#searchTrackForm').submit(function(e){
-  e.preventDefault();
-});
+$('#searchTrackForm').submit((e) => e.preventDefault());
 
 window.onSpotifyWebPlaybackSDKReady = async () => {
   const getCookie = (cle) => {
@@ -50,6 +52,33 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     volume: 0.1,
   });
 
+  /////////////////////
+  /* Event listeners */
+  /////////////////////
+  const socket = IO.createWebsocket();
+  socket.on(IO.events.player_pause_event, () => player.pause())
+  socket.on(IO.events.player_resume_event, () => player.resume())
+  socket.on(IO.events.player_skip_event, async () => {
+    await SpotifyApi.goToPreviousTrack(current_device, token);
+  })
+  socket.on(IO.events.queue_add_event, async (event) => {
+    Queue.add(event.payload[0]);
+
+    // If the session hasnt started we can play the song directly
+    if (!sessionStarted) {
+      sessionStarted = true;
+      let next = Queue.next();
+      await SpotifyApi.play(next.uri, current_device, token);
+      await setCurrentTrack(await player.getCurrentState());
+    }
+  })
+
+  //////////////////////////////////////////////////////////////
+
+  ///////////////////
+  /* SDK listeners */
+  ///////////////////
+
   // Ready
   player.addListener('ready', async ({ device_id }) => {
     current_device = device_id;
@@ -59,28 +88,73 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   // Not Ready
   player.addListener('not_ready', () => console.log('stopped'));
 
-  $('#togglePlayButton').click(() => {
-    player.getCurrentState().then(state => {
-      if(!state) return;
-      if(state.paused) {
-        document.querySelector("#togglePlayButton i").classList.remove('fa-play');
-        document.querySelector("#togglePlayButton i").classList.add('fa-pause');
-      } else {
-        document.querySelector("#togglePlayButton i").classList.remove('fa-pause');
-        document.querySelector("#togglePlayButton i").classList.add('fa-play');
-      }
-    })
-    player.togglePlay();
+  // State changed
+  player.addListener('player_state_changed', async (state) => {
+    const { position, paused, loading } = state;
+
+    if (paused) {
+      document.querySelector("#togglePlayButton i").classList.remove('fa-play');
+      document.querySelector("#togglePlayButton i").classList.add('fa-pause');
+    } else {
+      document.querySelector("#togglePlayButton i").classList.remove('fa-pause');
+      document.querySelector("#togglePlayButton i").classList.add('fa-play');
+    }
+
+    // Trust me it means session has ended
+    if (paused && loading) {
+      sessionStarted = false;
+      return;
+    }
+
+    if (position !== 0) return;
+    if (!paused) return;
+
+    let nextSong = Queue.next();
+    if (!nextSong) return;
+
+    await SpotifyApi.play(nextSong.uri, current_device, token);
+    await setCurrentTrack(await player.getCurrentState());
   });
 
 
+  //////////////////////////////////////////////////////////////
+
+  // Send events on pause/resume
+  $('#togglePlayButton').click(() => {
+    player.getCurrentState().then(state => {
+      if (!state) return;
+      if (state.paused) {
+        socket.emit(
+          IO.events.player_resume_event,
+          { sentAt: new Date().getTime(), payload: null }
+        )
+      } else {
+        socket.emit(
+          IO.events.player_pause_event,
+          { sentAt: new Date().getTime(), payload: null }
+        )
+      }
+    })
+  });
+
+  document.querySelector('#previousTrackButton').addEventListener('click', () => {
+    socket.emit(IO.events.player_skip_event, { sentAt: new Date().getTime(), payload: null})
+  });
+
+  // TODO: backend
+  document.querySelector('#nextTrackButton').addEventListener('click', async () => {
+    await SpotifyApi.goToNextTrack(current_device, token);
+  });
+
+  // Search results
   $('#searchbar-btn').click(() => {
-    if(document.querySelector('#query').value !== '') {
-      let query = document.querySelector('#query').value.trim().replaceAll(/\s+/g,'+');
+    if (document.querySelector('#query').value !== '') {
+      let query = document.querySelector('#query').value.trim().replaceAll(/\s+/g, '+');
       SpotifyApi.searchItem(query, token)
         .then(response => response.json())
         .then(json => {
           document.querySelector('#searchResults').innerHTML = '';
+          // Generate cards
           json.tracks.items.forEach((songItem, pos) => {
             let article = document.createElement('article');
             article.innerHTML = `<img src="${songItem.album.images[0].url}" alt="Track Image">
@@ -90,13 +164,20 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
                                 </div>`;
             article.classList.add('searchResult');
 
+            // Add song to queue handler
             let addButton = document.createElement('button');
             addButton.innerHTML = `<i class="fa-solid fa-satellite-dish"></i>`
             addButton.addEventListener('click', async () => {
-              await SpotifyApi.play(songItem.uri, current_device, token);
-              await setCurrentTrack(await player.getCurrentState());
+              const songEventData = songToPayload(songItem);
+              socket.emit(
+                IO.events.queue_add_event,
+                {
+                  sentAt: new Date().getTime(),
+                  payload: [songEventData]
+                }
+              )
             });
-            
+
             article.appendChild(addButton);
             document.querySelector('#searchResults').appendChild(article);
           });
@@ -106,7 +187,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
   const setCurrentTrack = async (state) => {
     let currentTrack = state.track_window.current_track;
-    
+
     document.title = currentTrack.name + " - Listen Along";
     $("#favicon").attr("href", currentTrack.album.images[2].url);
 
@@ -118,85 +199,23 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     songTimerRange.attr('value', 0);
     songTimerRange.attr('step', 1);
     songTimerRange.attr('max', seconds);
-    
-    songDuration.text(`${Math.floor(seconds/60)}:${(seconds%60) < 10 ? '0'+seconds%60 : seconds%60}`);
-    
+
+    songDuration.text(`${Math.floor(seconds / 60)}:${(seconds % 60) < 10 ? '0' + seconds % 60 : seconds % 60}`);
+
     setInterval(updateCurrentTrack, 1000);
 
     await player.seek(0);
-
-    document.querySelector("#togglePlayButton i").classList.remove('fa-play');
-    document.querySelector("#togglePlayButton i").classList.add('fa-pause');
-
-    document.querySelector('#previousTrackButton').addEventListener('click', async () => {
-      await SpotifyApi.goToPreviousTrack(current_device, token);
-    });
-
-    document.querySelector('#nextTrackButton').addEventListener('click', async () => {
-      await SpotifyApi.goToNextTrack(current_device, token);
-    });
   };
 
   const updateCurrentTrack = async () => {
     let status = await player.getCurrentState();
-    let position = Math.round(status["position"]  / 1000);
+    let position = Math.round(status["position"] / 1000);
     document.querySelector('#songActualTimerRange').value = position;
-    console.log('update du timer ' + position);
-    songTimer.text(`${Math.floor(position/60)}:${(position%60) < 10 ? '0'+position%60 : position%60}`);
+    songTimer.text(`${Math.floor(position / 60)}:${(position % 60) < 10 ? '0' + position % 60 : position % 60}`);
   }
 
-  let tempVolumeVal = 0;
-  $('#playerVolumeIcon').click(async () => {
-    if(await player.getVolume() > 0) {
-      tempVolumeVal = document.querySelector('#playerVolumeValue').value;
-      document.querySelector('#playerVolumeValue').value = '0';
-      await player.setVolume(0);
-      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-high')
-      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-xmark')
-    } else {
-      document.querySelector('#playerVolumeValue').value = tempVolumeVal;
-      await player.setVolume(parseFloat(tempVolumeVal));
-      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-xmark')
-      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-high')
-    }
-  });
-  document.querySelector('#playerVolumeValue').addEventListener('input', async () => {
-    let newVal = parseFloat(document.querySelector('#playerVolumeValue').value);  
-    await player.setVolume(newVal);
-    if(newVal === 0) {
-      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-high')
-      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-xmark')
-    } else {
-      document.querySelector("#playerVolumeIcon").classList.remove('fa-volume-xmark')
-      document.querySelector("#playerVolumeIcon").classList.add('fa-volume-high')
-    }
-  })
-
-  document.querySelector('#songActualTimerRange').addEventListener('input', async () => {
-    let wantedPos = parseInt(document.querySelector('#songActualTimerRange').value);
-    await player.seek(wantedPos*1000);
-  });
+  volumeManager(player);
   player.connect();
 
   document.querySelector('#playerVolumeValue').value = 0.1;
-<<<<<<< web-bindings
-  initWebsocket(player);
 };
-
-/*let currentState = await player.getCurrentState();
-        
-currentState.context.metadata = new MediaMetadata({
-  title: `Test`,
-  artist: 'Nat King Cole',
-  album: 'The Ultimate Collection (Remastered)',
-  artwork: Array.from(
-    firstResult["album"]["images"].map(image => ({
-      src: image["url"],
-      sizes: `${image["width"]}x${image["height"]}`,
-      type: 'image/jpeg'
-    }))
-  )
-});*/
-=======
-};
->>>>>>> UPDATE - Query > Choix > Player + Amélioration Visuelle

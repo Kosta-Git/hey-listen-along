@@ -14,21 +14,15 @@
     <h1>Listen Along</h1>
     <a id="login" href="/login">Log In</a>
     <div id="searchContainer">
-      <form id="searchTrackForm"> 
+      <form id="searchTrackForm">
         <input type="search" id="query" placeholder="Search Song..." autocomplete="off">
         <button  id="searchbar-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
       </form>
       <section id="searchResults" class="searchResults">
-        
+
       </section>
     </div>
-<<<<<<< web-bindings
-    <br>
-    <!-- Player -->
-    <div class="player-container">
-=======
     <div id="playerContainer" class="player-container">
->>>>>>> UPDATE - Query > Choix > Player + Amélioration Visuelle
       <div class="track-infos">
         <img id="currentTrackImage" alt="">
         <div>
@@ -43,13 +37,13 @@
       <div class="player">
         <button class="navigateButton" id="previousTrackButton">
           <i class="fa-solid fa-backward"></i>
-        </button>   
+        </button>
         <button id="togglePlayButton" class="togglePlayButton">
           <i class="fa-solid fa-play"></i>
-        </button>       
+        </button>
         <button class="navigateButton" id="nextTrackButton">
           <i class="fa-solid fa-forward"></i>
-        </button>       
+        </button>
         <span id="songActualTimer">0:00</span>
         <input id="songActualTimerRange" class="slider" type="range" min="0" max="1">
         <span id="songDuration">0:00</span>
@@ -59,17 +53,8 @@
           <input id="playerVolumeValue" class="slider" type="range" min="0" max="1" step="0.01">
       </div>
     </div>
-<<<<<<< web-bindings
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
-    <script src="/js/events.js"></script>
-    <script src="/js/main.js"></script>
-=======
-    <script
-      src="https://cdn.socket.io/4.4.1/socket.io.min.js"
-      integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
-      crossorigin="anonymous"></script>
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/main.js" type="module"></script>
->>>>>>> UPDATE - Query > Choix > Player + Amélioration Visuelle
   </body>
 </html>
