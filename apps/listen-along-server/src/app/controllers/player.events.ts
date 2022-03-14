@@ -14,7 +14,7 @@ let states: SocketPlayerState[] = [];
 const playerState =
   (server: Server, socket: Socket) => (data: Event<PlayerState>) => {
     const socketsInRoom = server.of('/').adapter.rooms.get(getRoom(socket))
-    states = states.filter((s) => !Array.from(socketsInRoom).includes(s.sid));
+    states = states.filter((s) => Array.from(socketsInRoom).includes(s.sid));
 
     if (states.filter((s) => s.sid === socket.id).length !== 0)
       states = states.filter((s) => s.sid !== socket.id);

@@ -69,31 +69,31 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       {
         sentAt: new Date().getTime(),
         payload: {
-          time: state.position,
-          song_uri: state.track_window.current_track.uri,
-          is_playing: !state.paused,
+          time: state?.position ?? -1,
+          song_uri: state?.track_window?.current_track.uri ?? undefined,
+          is_playing: !(state?.paused ?? true),
           has_started_listening: sessionStarted,
-          queue: queue.all()
+          queue: queue?.all() ?? []
         }
       })
   })
   socket.on(IO.events.player_state_event, async (event) => {
     console.log("RECEIVED STATE")
-    const {time, song_uri, is_playing, queue: serverQueue} = event.payload;
+    const { time, song_uri, is_playing, queue: serverQueue } = event.payload;
     const localState = await player.getCurrentState();
 
     const currentUri = localState.track_window.current_track.uri;
     const currentTime = localState.position;
 
-    if(is_playing === localState.paused) await player.togglePlay();
+    if (is_playing === localState.paused) await player.togglePlay();
 
     queue.setQueue(serverQueue);
-    if(currentUri !== song_uri) {
+    if (currentUri !== song_uri) {
       await SpotifyApi.play(song_uri, current_device, token);
       await player.seek(time + 50);
     } else {
       const deltaTime = (time + 50) - currentTime;
-      if(deltaTime > 300) await player.seek(time + 50);
+      if (deltaTime > 300) await player.seek(time + 50);
     }
   });
   socket.on(IO.events.player_skip_event, async () => {
