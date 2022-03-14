@@ -16,7 +16,6 @@ const playerState =
     const socketsInRoom = server.of('/').adapter.rooms.get(getRoom(socket))
     states = states.filter((s) => !Array.from(socketsInRoom).includes(s.sid));
 
-    console.log("[0] HAI", data)
     if (states.filter((s) => s.sid === socket.id).length !== 0)
       states = states.filter((s) => s.sid !== socket.id);
 
@@ -42,21 +41,15 @@ const playerState =
     if(songQueues.length === 0) return;
 
     const smallest = Math.min(...songQueues.map((a) => a.length));
-    console.log("[2] SM", smallest)
     songQueues = songQueues.filter((s) => s.length === smallest);
-    console.log("[3] SQ", songQueues)
     const highest = Math.max(...songQueues.map((a) => a[0].time));
-    console.log("[4] HI", highest)
     const winner = songQueues.find(s => s[0].time === highest);
-    console.log("[5] WIN", winner)
 
     const winnerState = states.find(s => s.sid === winner[0].sid);
 
     console.log("[6] WINS", winnerState)
-
     server.to(getRoom(socket)).emit(EventType.PlayerState, { sentAt: new Date().getTime(), payload: winnerState.state});
     states = [];
-
     console.log("KTHXBYE")
   };
 

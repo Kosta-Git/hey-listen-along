@@ -64,6 +64,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   socket.on(IO.events.player_resume_event, () => player.resume())
   socket.on(IO.events.player_sync_event, async () => {
     const state = await player.getCurrentState();
+    console.log("SEND STATE")
     socket.emit(IO.events.player_state_event,
       {
         sentAt: new Date().getTime(),
@@ -77,30 +78,23 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       })
   })
   socket.on(IO.events.player_state_event, async (event) => {
-    const deltaTimeServer = new Date().getTime() - event.sentAt;
+    console.log("RECEIVED STATE")
     const {time, song_uri, is_playing, queue: serverQueue} = event.payload;
     const localState = await player.getCurrentState();
 
     const currentUri = localState.track_window.current_track.uri;
     const currentTime = localState.position;
 
-    if(is_playing === localState.paused) {
-      await player.togglePlay();
-    }
+    if(is_playing === localState.paused) await player.togglePlay();
 
-    // HAI
+    queue.setQueue(serverQueue);
     if(currentUri !== song_uri) {
-      queue.setQueue(serverQueue);
       await SpotifyApi.play(song_uri, current_device, token);
-      await player.seek(time + deltaTimeServer);
+      await player.seek(time + 50);
     } else {
-      const deltaTime = (time + deltaTimeServer) - currentTime;
-
-      if(deltaTime > 300) {
-        await player.seek(time + deltaTimeServer);
-      }
+      const deltaTime = (time + 50) - currentTime;
+      if(deltaTime > 300) await player.seek(time + 50);
     }
-    // KTHXBYE
   });
   socket.on(IO.events.player_skip_event, async () => {
     let nextSong = queue.next();
