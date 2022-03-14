@@ -13,12 +13,18 @@ let states: SocketPlayerState[] = [];
 
 const playerState =
   (server: Server, socket: Socket) => (data: Event<PlayerState>) => {
-    // If client sends twice his state, drop
-    if (states.filter((s) => s.sid === socket.id).length === 0)
-      states.push({ sid: socket.id, state: data.payload });
+    const socketsInRoom = server.of('/').adapter.rooms.get(getRoom(socket))
+    states = states.filter((s) => !Array.from(socketsInRoom).includes(s.sid));
+
+    console.log("[0] HAI", data)
+    if (states.filter((s) => s.sid === socket.id).length !== 0)
+      states = states.filter((s) => s.sid !== socket.id);
+
+    states.push({ sid: socket.id, state: data.payload });
 
     const usersInRoom = server.of('/').adapter.rooms.get(getRoom(socket)).size;
-    if (usersInRoom !== states.length) return;
+    console.log("USERS", usersInRoom, states.length)
+    if (usersInRoom > states.length) return;
 
     let songQueues: { song_uri: string; sid?: string; time?: number }[][] = [];
 
@@ -40,7 +46,7 @@ const playerState =
     songQueues = songQueues.filter((s) => s.length === smallest);
     console.log("[3] SQ", songQueues)
     const highest = Math.max(...songQueues.map((a) => a[0].time));
-    console.log("[4] HAI", highest)
+    console.log("[4] HI", highest)
     const winner = songQueues.find(s => s[0].time === highest);
     console.log("[5] WIN", winner)
 
