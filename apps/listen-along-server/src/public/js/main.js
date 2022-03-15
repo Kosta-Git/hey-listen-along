@@ -15,6 +15,7 @@ let songTimer = $('#songActualTimer');
 let songDuration = $('#songDuration');
 let songTimerRange = $('#songActualTimerRange');
 /** Visual Elements - Queue */
+let queueMainContainer = $('#queue');
 let queueContainer = $('#queueTracks');
 
 
@@ -44,12 +45,14 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
   playerContainer.css('visibility', 'hidden');
   searchContainer.css('visibility', 'hidden');
+  queueMainContainer.css('visibility', 'hidden');
   if (!token) {
     $("#login").removeClass("hidden");
     return;
   }
   playerContainer.css('visibility', 'visible');
   searchContainer.css('visibility', 'visible');
+  queueMainContainer.css('visibility', 'visible');
 
   const player = new Spotify.Player({
     name: 'Listen Along',
@@ -124,7 +127,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     displayQueue();
   })
   socket.on(IO.events.queue_remove_event, async (event) => {
-    queue.removeMany(event.payload.map(id => id));
+    queue.removeMany(event.payload.map(elem => elem.id));
     displayQueue();
   })
 
@@ -330,6 +333,11 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       article.addEventListener('click', () => {
         socket.emit(IO.events.queue_clear_event, {});
       })
+    } else {
+      let element = document.createElement('p');
+      element.className = 'emptyQueueText';
+      element.innerText = 'Queue currently empty...';
+      queueContainer.append(element);
     }
   }
 };

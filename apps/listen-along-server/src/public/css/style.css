@@ -73,7 +73,7 @@ html {
 .queueTracks article {
   height: 60px;
   width: 300px;
-  margin-bottom: 0.5em;
+  margin: 0 auto 0.5em auto;
   border-radius: 0.5em;
   background: rgb(15, 14, 14);
   display: flex;
@@ -126,13 +126,29 @@ html {
 .queueClearButton {
   height: 60px;
   width: 300px;
-  margin-bottom: 0.5em;
+  border: inherit;
+  margin: 0 auto 0.5em auto;
   border-radius: 0.5em;
-  background: red;
+  background: rgba(255, 30, 0, 0.623);
   display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  transition: 0.5s;
+}
+
+.queueClearButton:hover {
+  background-color: rgba(255, 30, 0, 0.432);
+  transition: 0.5s;
+}
+
+.emptyQueueText {
+  height: 60px;
+  width: 300px;
+  font-style: italic;
+  color: whitesmoke;
+  text-align: center;
+  font-size: 1.2em;
+  margin: 0 auto;
 }
 
 #searchContainer {
