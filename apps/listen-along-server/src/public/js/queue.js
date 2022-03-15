@@ -15,11 +15,11 @@ export class Queue {
     this.data = elems
   }
 
-  remove(id) { this.data = this.data.filter(s => s.id === id); }
+  remove(id) { this.data = this.data.filter(s => s.id !== id); }
 
   removeMany(ids) {
     ids.forEach(id => {
-      this.data = this.data.filter(s => s.id === id);
+      this.data = this.data.filter(s => s.id !== id);
     });
   }
 

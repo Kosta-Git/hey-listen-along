@@ -14,6 +14,9 @@ let currentTrackSingers = $('#currentTrackSingers');
 let songTimer = $('#songActualTimer');
 let songDuration = $('#songDuration');
 let songTimerRange = $('#songActualTimerRange');
+/** Visual Elements - Queue */
+let queueContainer = $('#queueTracks');
+
 
 // Check if session has started already
 let sessionStarted = false;
@@ -115,6 +118,14 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       await player.seek(0);
       await player.resume()
     }
+
+    displayQueue();
+  });
+
+  socket.on(IO.events.queue_remove_event, async (event) => {
+    queue.remove(event.payload[0].id);
+
+    displayQueue();
   })
 
   //////////////////////////////////////////////////////////////
@@ -159,6 +170,7 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
         return;
       }
 
+      // TODO : Mettre à jour la queue
       lastEventWasSkip = true;
       await SpotifyApi.play(nextSong.uri, current_device, token);
       await player.seek(0);
@@ -252,6 +264,8 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
     songDuration.text(`${Math.floor(seconds / 60)}:${(seconds % 60) < 10 ? '0' + seconds % 60 : seconds % 60}`);
 
     setInterval(updateCurrentTrack, 1000);
+
+    displayQueue();
   };
 
   const updateCurrentTrack = async () => {
@@ -270,4 +284,44 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   player.connect();
 
   document.querySelector('#playerVolumeValue').value = 0.1;
+
+
+
+
+
+  //////////////////////////////////
+//// Visual related Functions ////
+//////////////////////////////////
+
+const displayQueue = () => {
+  // TODO : Changer le payload du add_queue_event pour donner l'uri de l'image de l'album
+
+  queueContainer.html('');
+  //document.querySelector('#queueTracks').innerHTML = '';
+  queue.all()
+    .forEach(songItem => {
+      let article = document.createElement('article');
+      article.innerHTML =  `<img src="${""/* Waiting for payload update */}" alt="Track Image">
+                            <div class="container">
+                              <div class="songTitle">${songItem.name}</div>
+                              <div class="songSinger">${songItem.artist}</div>
+                            </div>`;
+      
+      let delButton = document.createElement('button');
+      delButton.innerHTML = `<i class="fa-solid fa-trash"></i>`;
+
+      delButton.addEventListener('click', async () => {
+        socket.emit(
+          IO.events.queue_remove_event,
+          {
+            sentAt: new Date().getTime(),
+            payload: [songItem]
+          }
+        )
+      });
+      
+      article.appendChild(delButton);
+      queueContainer.append(article);
+    })
+  }
 };

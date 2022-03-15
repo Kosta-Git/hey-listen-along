@@ -16,14 +16,28 @@
       <h1 class="brand">Listen Along</h1>
       <a id="login" class="login hidden" href="/login">Login with Spotify</a>
     </div>
-    <div id="searchContainer">
-      <form id="searchTrackForm">
-        <input type="search" id="query" placeholder="Search Song..." autocomplete="off">
-        <button  id="searchbar-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-      </form>
-      <section id="searchResults" class="searchResults">
-
-      </section>
+    <div class="mainContainer">
+      <div id="searchContainer">
+        <form id="searchTrackForm">
+          <input type="search" id="query" placeholder="Search Song..." autocomplete="off">
+          <button  id="searchbar-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+        <section id="searchResults" class="searchResults">
+        </section>
+      </div>
+      <div class="queue">
+        <h2>Coming next...</h2>
+        <section id="queueTracks" class="queueTracks">
+          <!--<article>
+            <img alt="Track Image">
+            <div class="container">
+              <div class="songTitle">Dragon</div>
+              <div class="songSinger">Vald, Sofiane</div>
+            </div>
+            <button><i class="fa-solid fa-trash"></i></button>
+          </article>-->
+        </section>
+      </div>
     </div>
     <div id="playerContainer" class="player-container">
       <div class="track-infos">
