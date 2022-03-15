@@ -4,6 +4,5 @@ export interface Song {
   artist: string;
   album: string;
   uri: string;
-  preview_uri: string;
   preview_media: string;
 }

@@ -36,7 +36,6 @@ io.on('connection', (socket) => {
   socket.on(EventType.QueueAdd, QueueEvents.queueAdd(io, socket));
   socket.on(EventType.QueueRemove, QueueEvents.queueRemove(io, socket));
   socket.on(EventType.QueueClear, QueueEvents.queueClear(io, socket));
-  socket.on(EventType.QueueList, QueueEvents.queueList(io, socket));
 
   // Player events
   socket.on(EventType.PlayerState, PlayerEvents.playerState(io, socket));

@@ -67,7 +67,6 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
   socket.on(IO.events.player_resume_event, () => player.resume())
   socket.on(IO.events.player_sync_event, async () => {
     const state = await player.getCurrentState();
-    console.log("SEND STATE")
     socket.emit(IO.events.player_state_event,
       {
         sentAt: new Date().getTime(),
@@ -81,7 +80,6 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
       })
   })
   socket.on(IO.events.player_state_event, async (event) => {
-    console.log("RECEIVED STATE")
     const { time, song_uri, is_playing, queue: serverQueue } = event.payload;
     const localState = await player.getCurrentState();
 
@@ -121,10 +119,12 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
     displayQueue();
   });
-
+  socket.on(IO.events.queue_clear_event, () => {
+    queue.clear();
+    displayQueue();
+  })
   socket.on(IO.events.queue_remove_event, async (event) => {
-    queue.remove(event.payload[0].id);
-
+    queue.removeMany(event.payload.map(id => id));
     displayQueue();
   })
 
@@ -290,38 +290,46 @@ window.onSpotifyWebPlaybackSDKReady = async () => {
 
 
   //////////////////////////////////
-//// Visual related Functions ////
-//////////////////////////////////
+  //// Visual related Functions ////
+  //////////////////////////////////
 
-const displayQueue = () => {
-  // TODO : Changer le payload du add_queue_event pour donner l'uri de l'image de l'album
-
-  queueContainer.html('');
-  //document.querySelector('#queueTracks').innerHTML = '';
-  queue.all()
-    .forEach(songItem => {
-      let article = document.createElement('article');
-      article.innerHTML =  `<img src="${""/* Waiting for payload update */}" alt="Track Image">
+  const displayQueue = () => {
+    queueContainer.html('');
+    queue.all()
+      .forEach(songItem => {
+        let article = document.createElement('article');
+        article.innerHTML = `<img src="${songItem.preview_media}" alt="Track Image">
                             <div class="container">
                               <div class="songTitle">${songItem.name}</div>
                               <div class="songSinger">${songItem.artist}</div>
                             </div>`;
-      
-      let delButton = document.createElement('button');
-      delButton.innerHTML = `<i class="fa-solid fa-trash"></i>`;
 
-      delButton.addEventListener('click', async () => {
-        socket.emit(
-          IO.events.queue_remove_event,
-          {
-            sentAt: new Date().getTime(),
-            payload: [songItem]
-          }
-        )
-      });
-      
-      article.appendChild(delButton);
+        let delButton = document.createElement('button');
+        delButton.innerHTML = `<i class="fa-solid fa-trash"></i>`;
+
+        delButton.addEventListener('click', async () => {
+          socket.emit(
+            IO.events.queue_remove_event,
+            {
+              sentAt: new Date().getTime(),
+              payload: [songItem]
+            }
+          )
+        });
+
+        article.appendChild(delButton);
+        queueContainer.append(article);
+      })
+
+    if (queue.hasNext()) {
+      let article = document.createElement('button');
+      article.className = 'queueClearButton'
+      article.innerHTML = `<i class="fa-solid fa-trash"></i>`;
       queueContainer.append(article);
-    })
+
+      article.addEventListener('click', () => {
+        socket.emit(IO.events.queue_clear_event, {});
+      })
+    }
   }
 };

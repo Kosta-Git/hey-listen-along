@@ -3,8 +3,7 @@ export const songToPayload = (song) => ({
   artist: song.artists.map(a => a.name).join(","),
   album: song.album.name,
   uri: song.uri,
-  preview_uri: "string",
-  preview_media: "string",
+  preview_media: song.album.images[2].url,
 });
 
 export const compareStates = (state_a, state_b) => {

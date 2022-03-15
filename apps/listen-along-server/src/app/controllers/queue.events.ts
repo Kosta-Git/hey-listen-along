@@ -29,16 +29,8 @@ const queueClear = (server: Server, socket: Socket) => (data: Event<null>) => {
   server.to(getRoom(socket)).emit(EventType.QueueClear, data);
 };
 
-const queueList = (_: Server, socket: Socket) => (data: Event<Song[]>) => {
-  data.sentAt = new Date().getTime();
-
-  // TODO: Improve this mess
-  socket.to(getRoom(socket)).emit(EventType.QueueList, data);
-};
-
 export const QueueEvents = {
   queueAdd,
   queueRemove,
   queueClear,
-  queueList,
 };

@@ -5,7 +5,6 @@ export enum EventType {
   QueueAdd = "queue:add",
   QueueRemove = "queue:remove",
   QueueClear = "queue:clear",
-  QueueList = "queue:list",
   /**
    * Player events
    */

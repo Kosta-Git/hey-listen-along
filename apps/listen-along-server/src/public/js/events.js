@@ -5,7 +5,6 @@ export const events = {
   queue_add_event: "queue:add",
   queue_remove_event: "queue:remove",
   queue_clear_event: "queue:clear",
-  queue_list_event: "queue:list",
 
   // Player events
   player_state_event: "player:state",
